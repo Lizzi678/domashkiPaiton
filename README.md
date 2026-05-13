@@ -1,1 +1,1 @@
-# domashkiPaiton это для дзшки
+# domashkiPaiton это для дзшки  и тд
