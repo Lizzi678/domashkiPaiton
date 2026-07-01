@@ -1,12 +1,14 @@
-
-import time
 import pytest
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def test_session_storage_auth():
     driver = webdriver.Chrome()
-    driver.implicitly_wait(10)
+
+    # Инициализируем WebDriverWait (максимальное ожидание 10 секунд)
+    wait = WebDriverWait(driver, 10)
 
     user_1_cookies = [
         {
@@ -27,36 +29,40 @@ def test_session_storage_auth():
     ]
 
     try:
+        # --- ПОЛЬЗОВАТЕЛЬ 1 ---
         driver.get("https://gitflic.ru/")
 
         for cookie in user_1_cookies:
             driver.add_cookie(cookie)
 
         driver.refresh()
-
         driver.get("https://gitflic.ru/profile")
-        time.sleep(2)
 
+        # Ждем, пока URL изменится и будет содержать '/profile' (или имя пользователя)
+        wait.until(EC.url_contains("profile"))
         url_user_1 = driver.current_url
         print(f"\nURL Пользователя 1: {url_user_1}")
 
+        # Сброс сессии
         driver.delete_all_cookies()
 
+        # --- ПОЛЬЗОВАТЕЛЬ 2 ---
         driver.get("https://gitflic.ru/")
 
         for cookie in user_2_cookies:
             driver.add_cookie(cookie)
 
         driver.refresh()
-
         driver.get("https://gitflic.ru/profile")
-        time.sleep(2)
 
+        # Снова динамически ждем обновления URL
+        wait.until(EC.url_contains("profile"))
         url_user_2 = driver.current_url
         print(f"URL Пользователя 2: {url_user_2}")
 
+        # Проверка
         assert (
-            url_user_1 != url_user_2
+                url_user_1 != url_user_2
         ), f"Ошибка: URL пользователей одинаковые! {url_user_1} == {url_user_2}"
 
     finally:
