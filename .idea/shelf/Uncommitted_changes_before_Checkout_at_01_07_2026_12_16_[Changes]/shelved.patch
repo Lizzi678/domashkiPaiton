@@ -1,0 +1,71 @@
+Index: 06_lesson/test_lesson06_task2.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>\r\nimport time\r\nimport pytest\r\nfrom selenium import webdriver\r\n\r\n\r\ndef test_session_storage_auth():\r\n    driver = webdriver.Chrome()\r\n    driver.implicitly_wait(10)\r\n\r\n    user_1_cookies = [\r\n        {\r\n            \"name\": \"SESSION\",\r\n            \"value\": \"ZWQyZTc0NGUtMDEwZC00NDM3LTg5YzItYTdlYzkwNjYxZjU3\",\r\n        },\r\n        {\r\n            \"name\": \"remember-me\",\r\n            \"value\": \"R1p0VVltdnlEaUwxOUVIVjZKVEVBQSUzRCUzRDpIT09RNllvVlpRTk9Xa1VROVhiS0Z3JTNEJTNE\",\r\n        },\r\n    ]\r\n\r\n    user_2_cookies = [\r\n        {\r\n            \"name\": \"SESSION\",\r\n            \"value\": \"YjcxOWQ3YjItYzg1Zi00MTYyLWIxZWYtZTg5NjNiOTgwMGZh\",\r\n        }\r\n    ]\r\n\r\n    try:\r\n        driver.get(\"https://gitflic.ru/\")\r\n\r\n        for cookie in user_1_cookies:\r\n            driver.add_cookie(cookie)\r\n\r\n        driver.refresh()\r\n\r\n        driver.get(\"https://gitflic.ru/profile\")\r\n        time.sleep(2)\r\n\r\n        url_user_1 = driver.current_url\r\n        print(f\"\\nURL Пользователя 1: {url_user_1}\")\r\n\r\n        driver.delete_all_cookies()\r\n\r\n        driver.get(\"https://gitflic.ru/\")\r\n\r\n        for cookie in user_2_cookies:\r\n            driver.add_cookie(cookie)\r\n\r\n        driver.refresh()\r\n\r\n        driver.get(\"https://gitflic.ru/profile\")\r\n        time.sleep(2)\r\n\r\n        url_user_2 = driver.current_url\r\n        print(f\"URL Пользователя 2: {url_user_2}\")\r\n\r\n        assert (\r\n            url_user_1 != url_user_2\r\n        ), f\"Ошибка: URL пользователей одинаковые! {url_user_1} == {url_user_2}\"\r\n\r\n    finally:\r\n        driver.quit()\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    pytest.main([\"-v\", \"-s\", __file__])
+===================================================================
+diff --git a/06_lesson/test_lesson06_task2.py b/06_lesson/test_lesson06_task2.py
+--- a/06_lesson/test_lesson06_task2.py	(revision 60197b748b9cdc78e058f6139e19e5d228a5e0b4)
++++ b/06_lesson/test_lesson06_task2.py	(date 1782882852569)
+@@ -1,12 +1,13 @@
+-
+-import time
+ import pytest
+ from selenium import webdriver
++from selenium.webdriver.support.ui import WebDriverWait
++from selenium.webdriver.support import expected_conditions as EC
+ 
+ 
+ def test_session_storage_auth():
+     driver = webdriver.Chrome()
+-    driver.implicitly_wait(10)
++
++    wait = WebDriverWait(driver, 10)
+ 
+     user_1_cookies = [
+         {
+@@ -27,36 +28,40 @@
+     ]
+ 
+     try:
++        #  ПОЛЬЗОВАТЕЛЬ 1
+         driver.get("https://gitflic.ru/")
+ 
+         for cookie in user_1_cookies:
+             driver.add_cookie(cookie)
+ 
+         driver.refresh()
+-
+         driver.get("https://gitflic.ru/profile")
+-        time.sleep(2)
+ 
++        # Ждем, пока URL изменится и будет содержать '/profile' (или имя пользователя)
++        wait.until(EC.url_contains("profile"))
+         url_user_1 = driver.current_url
+         print(f"\nURL Пользователя 1: {url_user_1}")
+ 
++        # Сброс сессии
+         driver.delete_all_cookies()
+ 
++        # ПОЛЬЗОВАТЕЛЬ 2
+         driver.get("https://gitflic.ru/")
+ 
+         for cookie in user_2_cookies:
+             driver.add_cookie(cookie)
+ 
+         driver.refresh()
+-
+         driver.get("https://gitflic.ru/profile")
+-        time.sleep(2)
+ 
++        # Снова ждем обновления URL
++        wait.until(EC.url_contains("profile"))
+         url_user_2 = driver.current_url
+         print(f"URL Пользователя 2: {url_user_2}")
+ 
++        # Проверка
+         assert (
+-            url_user_1 != url_user_2
++                url_user_1 != url_user_2
+         ), f"Ошибка: URL пользователей одинаковые! {url_user_1} == {url_user_2}"
+ 
+     finally:
